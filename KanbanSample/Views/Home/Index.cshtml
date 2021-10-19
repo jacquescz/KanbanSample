@@ -1,0 +1,95 @@
+﻿@model KanbanSample.Models.HomeIndexViewModel
+@{
+    ViewBag.Title = "Home Page";
+}
+
+
+
+
+    <div class="alert alert-primary" id="debugMessage">
+
+    </div>
+
+
+
+    <div class="d-flex flex-row bd-highlight mb-3 overflow-auto h-100">
+        @foreach (var state in Model.PersonStates)
+        {
+            <div class="p-2 bd-highlight">
+                <div class="card  h-100 " style="width: 200px;">
+                    <div class="card-header bg-primary text-white">
+                        <div class="card-title ">@state.Name</div>
+                    </div>
+                    <div class="card-body" data-id="@state.Id" id="State-@state.Id" ondrop="drop(event,this)" ondragover="allowDrop(event)">
+
+                        @foreach (var person in Model.People.Where(x => x.StateId == state.Id))
+                        {
+                            <div class="card " draggable="true" ondragover="return false;" ondrop="return false;" ondragstart="drag(event)" id="person-@person.Id" data-id="@person.Id">
+                                <div class="card-body">
+                                    @person.Name
+                                </div>
+
+                            </div>
+
+                        }
+
+                    </div>
+
+                </div>
+            </div>
+
+        }
+    </div>
+
+
+
+
+@section scripts
+{
+    <script>
+        function allowDrop(ev) {
+            ev.preventDefault();
+        }
+
+
+        function drag(ev) {
+            $("#debugMessage").html("Dragging: " + ev.target.id);
+            ev.dataTransfer.setData("text", ev.target.id);
+        }
+        function drop(ev, el) {
+            ev.preventDefault();
+            var data = ev.dataTransfer.getData("text");
+
+            var stateDropId = el.dataset.id;
+
+            var person = document.getElementById(data);
+            var personId = person.dataset.id;
+            //alert("Person Id: " + personId + " Drop on State Id: " + stateDropId)
+            UpdatePersonState(personId, stateDropId);
+
+            el.appendChild(document.getElementById(data));
+
+        }
+
+       
+
+        function UpdatePersonState(personId, stateId) {
+            actionUrl = "@Url.Action("UpdateState", "People")";
+            $.ajax({
+                url: actionUrl,
+                type: "POST",
+                data: { personId: personId, stateId: stateId },
+                success: function (result) {
+                    console.log("Person State Update", result);
+                    if (result == "OK") {
+                        $("#debugMessage").html("Person State Updated Successful");
+                    } else {
+                        $("#debugMessage").html(result);
+                    }
+                }
+            })
+        }
+
+    </script>
+
+}
